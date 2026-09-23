@@ -6,7 +6,6 @@
   <title>じゅかーびーず ARカメラ</title>
   <link rel="icon" href="icon.png" type="image/png">
   <link rel="apple-touch-icon" href="icon.png">
-  <!-- PWA用設定の追加 -->
   <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -214,11 +213,6 @@
   <canvas id="capture-canvas"></canvas>
 
   <script>
-    // PWA Service Worker 登録
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
-    }
-
     const characters = [
       { id: 'juta_welcome', name: 'Juta Welcome', src: 'Juta_Welcome.png', defaultScale: 1.0 },
       { id: 'bee_good',    name: 'Bee Good',    src: 'Bee_Good.png',    defaultScale: 0.9 },
