@@ -30,18 +30,23 @@
       background-color: #000;
     }
 
+    /* 全体を縦並びのフレックスボックス構造に変更 */
     #app-container {
       position: relative;
       width: 100vw;
       height: 100vh;
-      overflow: hidden;
+      height: 100dvh; /* リアルな表示領域に自動フィット */
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      justify-content: space-between;
       align-items: center;
+      overflow: hidden;
     }
 
     video {
       position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
       object-fit: cover;
@@ -58,12 +63,11 @@
       pointer-events: none;
     }
 
-    /* キャラ画像の表示サイズ固定 */
     #character {
       position: absolute;
-      width: 180px !important;
+      width: 170px !important;
       height: auto !important;
-      max-width: 180px !important;
+      max-width: 170px !important;
       max-height: none !important;
       transform-origin: center center;
       cursor: move;
@@ -72,14 +76,12 @@
     }
 
     .ui-header {
-      position: absolute;
-      top: 15px;
-      left: 0;
+      position: relative;
       width: 100%;
       z-index: 10;
       display: flex;
       justify-content: space-between;
-      padding: 0 20px;
+      padding: 12px 20px 0 20px;
     }
 
     .btn-icon {
@@ -102,22 +104,21 @@
       background: var(--bee-yellow);
     }
 
-    /* 下部UIの位置を60px引き上げてシステムバー回避 */
+    /* フッター領域を画面内側にしっかりマージン確保 */
     .ui-footer {
-      position: absolute;
-      bottom: calc(60px + env(safe-area-inset-bottom));
-      left: 0;
+      position: relative;
       width: 100%;
       z-index: 10;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      padding-bottom: clamp(15px, 4vh, 30px); /* 画面サイズに応じて自動マージン調整 */
     }
 
     .palette-container {
       width: 90%;
-      max-width: 380px;
+      max-width: 360px;
       background: rgba(255, 255, 255, 0.9);
       border: 3px solid var(--bee-yellow);
       border-radius: 16px;
@@ -130,8 +131,8 @@
     }
 
     .palette-item {
-      width: 48px;
-      height: 48px;
+      width: 46px;
+      height: 46px;
       flex-shrink: 0;
       border-radius: 10px;
       border: 2px solid transparent;
@@ -190,15 +191,18 @@
 <body>
 
   <div id="app-container">
+    <!-- カメラ映像とステージ -->
     <video id="webcam" autoplay playsinline></video>
     <div id="stage">
       <img id="character" src="" alt="Juta&Bee">
     </div>
 
+    <!-- 上部UI -->
     <div class="ui-header">
       <button class="btn-icon" id="flip-btn">🔄</button>
     </div>
 
+    <!-- 下部UI（自動で画面内側に収まる領域） -->
     <div class="ui-footer">
       <div class="palette-container" id="palette"></div>
       <button class="shutter-btn" id="shutter-btn">
