@@ -58,17 +58,17 @@
       pointer-events: none;
     }
 
+    /* キャラ画像の表示サイズを厳格に固定 */
     #character {
       position: absolute;
+      width: 180px !important; /* スマホ画面にちょうどいい基準幅 */
+      height: auto !important;
+      max-width: 180px !important;
+      max-height: none !important;
       transform-origin: center center;
       cursor: move;
       pointer-events: auto;
       touch-action: none;
-      /* 固定基準幅（180px）に設定して巨大化を防止 */
-      width: 180px;
-      height: auto;
-      max-width: none;
-      max-height: none;
     }
 
     .ui-header {
@@ -102,7 +102,6 @@
       background: var(--bee-yellow);
     }
 
-    /* フッター配置を見直してボタンの見切れを防止 */
     .ui-footer {
       position: absolute;
       bottom: 15px;
@@ -210,13 +209,13 @@
   <canvas id="capture-canvas"></canvas>
 
   <script>
-    // 初期倍率を適正サイズへ変更
+    // 素材ごとの初期表示倍率設定
     const characters = [
       { id: 'juta_welcome', name: 'Juta Welcome', src: 'Juta_Welcome.png', defaultScale: 1.0 },
-      { id: 'bee_good',    name: 'Bee Good',    src: 'Bee_Good.png',    defaultScale: 1.0 },
+      { id: 'bee_good',    name: 'Bee Good',    src: 'Bee_Good.png',    defaultScale: 0.9 },
       { id: 'bee_yay',     name: 'Bee Yay',     src: 'Bee_Yay.png',     defaultScale: 1.0 },
       { id: 'jb_close',    name: 'J&B Close',   src: 'J&B_Closefriends.png', defaultScale: 1.2 },
-      { id: 'jb_peeping',  name: 'J&B Peeping', src: 'J&B_Peeping.png', defaultScale: 1.2 },
+      { id: 'jb_peeping',  name: 'J&B Peeping', src: 'J&B_Peeping.png', defaultScale: 1.1 },
       { id: 'juta_think',  name: 'Juta Think',  src: 'Juta_Think.png',  defaultScale: 1.0 }
     ];
 
@@ -282,7 +281,7 @@
       startCamera();
     });
 
-    // タッチ・ドラッグ・ピンチ操作
+    // ピンチ・ドラッグ操作
     let activePointers = [];
     let initialPinchDistance = 0;
     let initialScale = 1.0;
@@ -332,12 +331,12 @@
       updateTransform();
     }, { passive: false });
 
-    // アスペクト比歪み・潰れを解消した撮影ロジック
+    // 見た目そのまま（アスペクト比絶対維持）で保存する描画ロジック
     shutterBtn.addEventListener('click', () => {
       const ctx = canvas.getContext('2d');
       const stageRect = document.getElementById('stage').getBoundingClientRect();
 
-      // キャンバスを画面のアスペクト比に完全に一致させる
+      // キャンバスを画面表示サイズ（解像度2倍補正）に設定
       const dpr = window.devicePixelRatio || 1;
       canvas.width = stageRect.width * dpr;
       canvas.height = stageRect.height * dpr;
@@ -345,7 +344,9 @@
       const vW = video.videoWidth;
       const vH = video.videoHeight;
 
-      // 画面表示（object-fit: cover）と同等のクリッピング計算
+      if (!vW || !vH) return;
+
+      // 画面のカバー表示（object-fit: cover）のクリッピング切り出し計算
       const stageAspect = stageRect.width / stageRect.height;
       const videoAspect = vW / vH;
 
@@ -359,10 +360,10 @@
         srcY = (vH - srcH) / 2;
       }
 
-      // 1. 背景カメラを描画（アスペクト比維持）
+      // 1. 背景カメラ画像を描画
       ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, canvas.width, canvas.height);
 
-      // 2. キャラクターをプレビュー通りの見た目サイズ・位置で完全再現描画
+      // 2. キャラクターの位置とサイズを画面の見た目その通りに重ね合わせる
       const charRect = character.getBoundingClientRect();
       const drawX = (charRect.left - stageRect.left) * dpr;
       const drawY = (charRect.top - stageRect.top) * dpr;
