@@ -6,6 +6,11 @@
   <title>じゅかーびーず ARカメラ</title>
   <link rel="icon" href="icon.png" type="image/png">
   <link rel="apple-touch-icon" href="icon.png">
+  <!-- PWA用設定の追加 -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
   <style>
     :root {
       --juta-blue: #70d6ff;
@@ -30,12 +35,11 @@
       background-color: #000;
     }
 
-    /* 全体を縦並びのフレックスボックス構造に変更 */
     #app-container {
       position: relative;
       width: 100vw;
       height: 100vh;
-      height: 100dvh; /* リアルな表示領域に自動フィット */
+      height: 100dvh;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -104,7 +108,6 @@
       background: var(--bee-yellow);
     }
 
-    /* フッター領域を画面内側にしっかりマージン確保 */
     .ui-footer {
       position: relative;
       width: 100%;
@@ -113,7 +116,7 @@
       flex-direction: column;
       align-items: center;
       gap: 8px;
-      padding-bottom: clamp(15px, 4vh, 30px); /* 画面サイズに応じて自動マージン調整 */
+      padding-bottom: clamp(15px, 4vh, 30px);
     }
 
     .palette-container {
@@ -191,18 +194,15 @@
 <body>
 
   <div id="app-container">
-    <!-- カメラ映像とステージ -->
     <video id="webcam" autoplay playsinline></video>
     <div id="stage">
       <img id="character" src="" alt="Juta&Bee">
     </div>
 
-    <!-- 上部UI -->
     <div class="ui-header">
       <button class="btn-icon" id="flip-btn">🔄</button>
     </div>
 
-    <!-- 下部UI（自動で画面内側に収まる領域） -->
     <div class="ui-footer">
       <div class="palette-container" id="palette"></div>
       <button class="shutter-btn" id="shutter-btn">
@@ -214,6 +214,11 @@
   <canvas id="capture-canvas"></canvas>
 
   <script>
+    // PWA Service Worker 登録
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+
     const characters = [
       { id: 'juta_welcome', name: 'Juta Welcome', src: 'Juta_Welcome.png', defaultScale: 1.0 },
       { id: 'bee_good',    name: 'Bee Good',    src: 'Bee_Good.png',    defaultScale: 0.9 },
