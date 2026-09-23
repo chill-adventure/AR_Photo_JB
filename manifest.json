@@ -1,6 +1,6 @@
 {
   "name": "じゅかーびーず ARカメラ",
-  "short_name": "JB ARカメラ",
+  "short_name": "JB ARカメラ v2",
   "description": "じゅかーびーずと一緒に写真が撮れるARフォトアプリ",
   "start_url": "./index.html",
   "display": "standalone",
