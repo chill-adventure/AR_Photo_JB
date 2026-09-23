@@ -1,8 +1,15 @@
-self.addEventListener('install', (e) => {
-  console.log('[Service Worker] Install');
+const CACHE_NAME = 'jb-ar-v1';
+
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
 });
 
-self.addEventListener('fetch', (e) => {
-  // 最小限のキャッシュ透過処理
-  e.respondWith(fetch(e.request));
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim());
+});
+
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    fetch(event.request).catch(() => caches.match(event.request))
+  );
 });
