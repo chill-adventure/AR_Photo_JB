@@ -389,6 +389,10 @@
         }, 'image/png');
       };
     });
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+        }
+
 
     initPalette();
     startCamera();
