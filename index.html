@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>じゅかーびーず ARカメラ</title>
   <link rel="icon" href="icon.png" type="image/png">
   <link rel="apple-touch-icon" href="icon.png">
@@ -64,6 +64,9 @@
       cursor: move;
       pointer-events: auto;
       touch-action: none;
+      /* 固定基準幅（180px）に設定して巨大化を防止 */
+      width: 180px;
+      height: auto;
       max-width: none;
       max-height: none;
     }
@@ -83,9 +86,9 @@
       background: rgba(255, 255, 255, 0.85);
       border: 3px solid var(--juta-blue);
       border-radius: 50%;
-      width: 48px;
-      height: 48px;
-      font-size: 20px;
+      width: 44px;
+      height: 44px;
+      font-size: 18px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -99,37 +102,38 @@
       background: var(--bee-yellow);
     }
 
+    /* フッター配置を見直してボタンの見切れを防止 */
     .ui-footer {
       position: absolute;
-      bottom: 20px;
+      bottom: 15px;
       left: 0;
       width: 100%;
       z-index: 10;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
+      gap: 6px;
     }
 
     .palette-container {
       width: 90%;
-      max-width: 400px;
+      max-width: 380px;
       background: rgba(255, 255, 255, 0.9);
       border: 3px solid var(--bee-yellow);
-      border-radius: 20px;
-      padding: 8px 12px;
+      border-radius: 16px;
+      padding: 6px 10px;
       display: flex;
-      gap: 10px;
+      gap: 8px;
       overflow-x: auto;
-      box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       backdrop-filter: blur(4px);
     }
 
     .palette-item {
-      width: 60px;
-      height: 60px;
+      width: 52px;
+      height: 52px;
       flex-shrink: 0;
-      border-radius: 12px;
+      border-radius: 10px;
       border: 2px solid transparent;
       background: var(--bg-light);
       display: flex;
@@ -154,21 +158,21 @@
     }
 
     .shutter-btn {
-      width: 72px;
-      height: 72px;
+      width: 60px;
+      height: 60px;
       background: #fff;
-      border: 5px solid var(--accent-orange);
+      border: 4px solid var(--accent-orange);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       cursor: pointer;
     }
 
     .shutter-btn-inner {
-      width: 52px;
-      height: 52px;
+      width: 44px;
+      height: 44px;
       background: var(--accent-orange);
       border-radius: 50%;
       transition: transform 0.1s;
@@ -206,13 +210,14 @@
   <canvas id="capture-canvas"></canvas>
 
   <script>
+    // 初期倍率を適正サイズへ変更
     const characters = [
-      { id: 'juta_welcome', name: 'Juta Welcome', src: 'Juta_Welcome.png', defaultScale: 0.8 },
-      { id: 'bee_good',    name: 'Bee Good',    src: 'Bee_Good.png',    defaultScale: 0.7 },
-      { id: 'bee_yay',     name: 'Bee Yay',     src: 'Bee_Yay.png',     defaultScale: 0.8 },
-      { id: 'jb_close',    name: 'J&B Close',   src: 'J&B_Closefriends.png', defaultScale: 0.9 },
-      { id: 'jb_peeping',  name: 'J&B Peeping', src: 'J&B_Peeping.png', defaultScale: 0.8 },
-      { id: 'juta_think',  name: 'Juta Think',  src: 'Juta_Think.png',  defaultScale: 0.8 }
+      { id: 'juta_welcome', name: 'Juta Welcome', src: 'Juta_Welcome.png', defaultScale: 1.0 },
+      { id: 'bee_good',    name: 'Bee Good',    src: 'Bee_Good.png',    defaultScale: 1.0 },
+      { id: 'bee_yay',     name: 'Bee Yay',     src: 'Bee_Yay.png',     defaultScale: 1.0 },
+      { id: 'jb_close',    name: 'J&B Close',   src: 'J&B_Closefriends.png', defaultScale: 1.2 },
+      { id: 'jb_peeping',  name: 'J&B Peeping', src: 'J&B_Peeping.png', defaultScale: 1.2 },
+      { id: 'juta_think',  name: 'Juta Think',  src: 'Juta_Think.png',  defaultScale: 1.0 }
     ];
 
     const video = document.getElementById('webcam');
@@ -225,9 +230,8 @@
     let currentFacingMode = 'environment';
     let currentStream = null;
     let posX = window.innerWidth / 2;
-    let posY = window.innerHeight / 2;
+    let posY = window.innerHeight / 2.5;
     let scale = 1.0;
-    let baseScale = 1.0;
 
     function initPalette() {
       characters.forEach((char, index) => {
@@ -246,11 +250,10 @@
       });
       const selected = characters[index];
       character.src = selected.src;
-      baseScale = selected.defaultScale;
-      scale = baseScale;
+      scale = selected.defaultScale;
       
       posX = window.innerWidth / 2;
-      posY = window.innerHeight / 3;
+      posY = window.innerHeight / 2.5;
       updateTransform();
     }
 
@@ -279,6 +282,7 @@
       startCamera();
     });
 
+    // タッチ・ドラッグ・ピンチ操作
     let activePointers = [];
     let initialPinchDistance = 0;
     let initialScale = 1.0;
@@ -328,26 +332,47 @@
       updateTransform();
     }, { passive: false });
 
+    // アスペクト比歪み・潰れを解消した撮影ロジック
     shutterBtn.addEventListener('click', () => {
       const ctx = canvas.getContext('2d');
-      canvas.width = video.videoWidth || window.innerWidth;
-      canvas.height = video.videoHeight || window.innerHeight;
-
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
       const stageRect = document.getElementById('stage').getBoundingClientRect();
-      const scaleX = canvas.width / stageRect.width;
-      const scaleY = canvas.height / stageRect.height;
 
-      const imgWidth = character.naturalWidth * scale * scaleX;
-      const imgHeight = character.naturalHeight * scale * scaleY;
-      const drawX = (posX * scaleX) - (imgWidth / 2);
-      const drawY = (posY * scaleY) - (imgHeight / 2);
+      // キャンバスを画面のアスペクト比に完全に一致させる
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = stageRect.width * dpr;
+      canvas.height = stageRect.height * dpr;
+
+      const vW = video.videoWidth;
+      const vH = video.videoHeight;
+
+      // 画面表示（object-fit: cover）と同等のクリッピング計算
+      const stageAspect = stageRect.width / stageRect.height;
+      const videoAspect = vW / vH;
+
+      let srcX = 0, srcY = 0, srcW = vW, srcH = vH;
+
+      if (videoAspect > stageAspect) {
+        srcW = vH * stageAspect;
+        srcX = (vW - srcW) / 2;
+      } else {
+        srcH = vW / stageAspect;
+        srcY = (vH - srcH) / 2;
+      }
+
+      // 1. 背景カメラを描画（アスペクト比維持）
+      ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, canvas.width, canvas.height);
+
+      // 2. キャラクターをプレビュー通りの見た目サイズ・位置で完全再現描画
+      const charRect = character.getBoundingClientRect();
+      const drawX = (charRect.left - stageRect.left) * dpr;
+      const drawY = (charRect.top - stageRect.top) * dpr;
+      const drawW = charRect.width * dpr;
+      const drawH = charRect.height * dpr;
 
       const charImg = new Image();
       charImg.src = character.src;
       charImg.onload = () => {
-        ctx.drawImage(charImg, drawX, drawY, imgWidth, imgHeight);
+        ctx.drawImage(charImg, drawX, drawY, drawW, drawH);
 
         canvas.toBlob((blob) => {
           const file = new File([blob], 'juka_beads_photo.png', { type: 'image/png' });
@@ -359,7 +384,7 @@
             }).catch(() => {});
           } else {
             const a = document.createElement('a');
-            a.href = URL.click ? URL.createObjectURL(blob) : '';
+            a.href = URL.createObjectURL(blob);
             a.download = `juka_beads_${Date.now()}.png`;
             a.click();
           }
