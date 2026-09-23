@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>じゅかーびーず ARカメラ</title>
+  <link rel="icon" href="icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <style>
+    :root {
+      --juta-blue: #70d6ff;
+      --bee-yellow: #ffde59;
+      --accent-orange: #ff914d;
+      --bg-light: #f4f9f9;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background-color: #000;
+    }
+
+    #app-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    video {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+    }
+
+    #stage {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    #character {
+      position: absolute;
+      transform-origin: center center;
+      cursor: move;
+      pointer-events: auto;
+      touch-action: none;
+      max-width: none;
+      max-height: none;
+    }
+
+    .ui-header {
+      position: absolute;
+      top: 15px;
+      left: 0;
+      width: 100%;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 20px;
+    }
+
+    .btn-icon {
+      background: rgba(255, 255, 255, 0.85);
+      border: 3px solid var(--juta-blue);
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+    }
+
+    .btn-icon:active {
+      transform: scale(0.92);
+      background: var(--bee-yellow);
+    }
+
+    .ui-footer {
+      position: absolute;
+      bottom: 20px;
+      left: 0;
+      width: 100%;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .palette-container {
+      width: 90%;
+      max-width: 400px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 3px solid var(--bee-yellow);
+      border-radius: 20px;
+      padding: 8px 12px;
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+      backdrop-filter: blur(4px);
+    }
+
+    .palette-item {
+      width: 60px;
+      height: 60px;
+      flex-shrink: 0;
+      border-radius: 12px;
+      border: 2px solid transparent;
+      background: var(--bg-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+
+    .palette-item img {
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
+    }
+
+    .palette-item.active {
+      border-color: var(--accent-orange);
+      background: #fff;
+      transform: scale(1.05);
+      box-shadow: 0 2px 8px rgba(255, 145, 77, 0.4);
+    }
+
+    .shutter-btn {
+      width: 72px;
+      height: 72px;
+      background: #fff;
+      border: 5px solid var(--accent-orange);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      cursor: pointer;
+    }
+
+    .shutter-btn-inner {
+      width: 52px;
+      height: 52px;
+      background: var(--accent-orange);
+      border-radius: 50%;
+      transition: transform 0.1s;
+    }
+
+    .shutter-btn:active .shutter-btn-inner {
+      transform: scale(0.85);
+    }
+
+    #capture-canvas {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="app-container">
+    <video id="webcam" autoplay playsinline></video>
+    <div id="stage">
+      <img id="character" src="" alt="Juta&Bee">
+    </div>
+
+    <div class="ui-header">
+      <button class="btn-icon" id="flip-btn">🔄</button>
+    </div>
+
+    <div class="ui-footer">
+      <div class="palette-container" id="palette"></div>
+      <button class="shutter-btn" id="shutter-btn">
+        <div class="shutter-btn-inner"></div>
+      </button>
+    </div>
+  </div>
+
+  <canvas id="capture-canvas"></canvas>
+
+  <script>
+    const characters = [
+      { id: 'juta_welcome', name: 'Juta Welcome', src: 'Juta_Welcome.png', defaultScale: 0.8 },
+      { id: 'bee_good',    name: 'Bee Good',    src: 'Bee_Good.png',    defaultScale: 0.7 },
+      { id: 'bee_yay',     name: 'Bee Yay',     src: 'Bee_Yay.png',     defaultScale: 0.8 },
+      { id: 'jb_close',    name: 'J&B Close',   src: 'J&B_Closefriends.png', defaultScale: 0.9 },
+      { id: 'jb_peeping',  name: 'J&B Peeping', src: 'J&B_Peeping.png', defaultScale: 0.8 },
+      { id: 'juta_think',  name: 'Juta Think',  src: 'Juta_Think.png',  defaultScale: 0.8 }
+    ];
+
+    const video = document.getElementById('webcam');
+    const character = document.getElementById('character');
+    const palette = document.getElementById('palette');
+    const flipBtn = document.getElementById('flip-btn');
+    const shutterBtn = document.getElementById('shutter-btn');
+    const canvas = document.getElementById('capture-canvas');
+
+    let currentFacingMode = 'environment';
+    let currentStream = null;
+    let posX = window.innerWidth / 2;
+    let posY = window.innerHeight / 2;
+    let scale = 1.0;
+    let baseScale = 1.0;
+
+    function initPalette() {
+      characters.forEach((char, index) => {
+        const item = document.createElement('div');
+        item.className = `palette-item ${index === 0 ? 'active' : ''}`;
+        item.innerHTML = `<img src="${char.src}" alt="${char.name}">`;
+        item.addEventListener('click', () => selectCharacter(index));
+        palette.appendChild(item);
+      });
+      selectCharacter(0);
+    }
+
+    function selectCharacter(index) {
+      document.querySelectorAll('.palette-item').forEach((el, i) => {
+        el.classList.toggle('active', i === index);
+      });
+      const selected = characters[index];
+      character.src = selected.src;
+      baseScale = selected.defaultScale;
+      scale = baseScale;
+      
+      posX = window.innerWidth / 2;
+      posY = window.innerHeight / 3;
+      updateTransform();
+    }
+
+    function updateTransform() {
+      character.style.transform = `translate(-50%, -50%) translate(${posX}px, ${posY}px) scale(${scale})`;
+    }
+
+    async function startCamera() {
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+      }
+      try {
+        const constraints = {
+          video: { facingMode: currentFacingMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
+          audio: false
+        };
+        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = currentStream;
+      } catch (err) {
+        alert('カメラの起動に失敗しました: ' + err.message);
+      }
+    }
+
+    flipBtn.addEventListener('click', () => {
+      currentFacingMode = (currentFacingMode === 'environment') ? 'user' : 'environment';
+      startCamera();
+    });
+
+    let activePointers = [];
+    let initialPinchDistance = 0;
+    let initialScale = 1.0;
+
+    character.addEventListener('pointerdown', (e) => {
+      character.setPointerCapture(e.pointerId);
+      activePointers.push(e);
+    });
+
+    character.addEventListener('pointermove', (e) => {
+      const index = activePointers.findIndex(p => p.pointerId === e.pointerId);
+      if (index !== -1) activePointers[index] = e;
+
+      if (activePointers.length === 1) {
+        posX += e.movementX;
+        posY += e.movementY;
+        updateTransform();
+      } else if (activePointers.length === 2) {
+        const dist = Math.hypot(
+          activePointers[0].clientX - activePointers[1].clientX,
+          activePointers[0].clientY - activePointers[1].clientY
+        );
+        if (initialPinchDistance === 0) {
+          initialPinchDistance = dist;
+          initialScale = scale;
+        } else {
+          scale = initialScale * (dist / initialPinchDistance);
+          updateTransform();
+        }
+      }
+    });
+
+    const handlePointerUp = (e) => {
+      activePointers = activePointers.filter(p => p.pointerId !== e.pointerId);
+      if (activePointers.length < 2) {
+        initialPinchDistance = 0;
+      }
+    };
+
+    character.addEventListener('pointerup', handlePointerUp);
+    character.addEventListener('pointercancel', handlePointerUp);
+
+    character.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      scale += e.deltaY * -0.001;
+      scale = Math.min(Math.max(0.2, scale), 3.0);
+      updateTransform();
+    }, { passive: false });
+
+    shutterBtn.addEventListener('click', () => {
+      const ctx = canvas.getContext('2d');
+      canvas.width = video.videoWidth || window.innerWidth;
+      canvas.height = video.videoHeight || window.innerHeight;
+
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const stageRect = document.getElementById('stage').getBoundingClientRect();
+      const scaleX = canvas.width / stageRect.width;
+      const scaleY = canvas.height / stageRect.height;
+
+      const imgWidth = character.naturalWidth * scale * scaleX;
+      const imgHeight = character.naturalHeight * scale * scaleY;
+      const drawX = (posX * scaleX) - (imgWidth / 2);
+      const drawY = (posY * scaleY) - (imgHeight / 2);
+
+      const charImg = new Image();
+      charImg.src = character.src;
+      charImg.onload = () => {
+        ctx.drawImage(charImg, drawX, drawY, imgWidth, imgHeight);
+
+        canvas.toBlob((blob) => {
+          const file = new File([blob], 'juka_beads_photo.png', { type: 'image/png' });
+          if (navigator.share && navigator.canShare({ files: [file] })) {
+            navigator.share({
+              files: [file],
+              title: 'じゅかーびーずフォト',
+              text: 'じゅかーびーずと一緒に写真を撮ったよ！'
+            }).catch(() => {});
+          } else {
+            const a = document.createElement('a');
+            a.href = URL.click ? URL.createObjectURL(blob) : '';
+            a.download = `juka_beads_${Date.now()}.png`;
+            a.click();
+          }
+        }, 'image/png');
+      };
+    });
+
+    initPalette();
+    startCamera();
+  </script>
+</body>
+</html>
